@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library Management System</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body>
+<header><div class="brand"><span class="logo">▤</span><div><strong>Library</strong><small>MANAGEMENT SYSTEM</small></div></div><span class="header-note">Library dashboard</span></header>
+<main>
+<section class="welcome"><div><p class="eyebrow">OVERVIEW</p><h1>Good day, Librarian</h1><p>Manage your collection, issue books and track returns.</p></div><div class="date-pill">📅 {{ today }}</div></section>
+{% with messages=get_flashed_messages(with_categories=true) %}{% if messages %}{% for category,message in messages %}<div class="alert {{category}}">{{message}}</div>{% endfor %}{% endif %}{% endwith %}
+<section class="stats">
+<div class="stat"><span class="stat-icon">▤</span><div><small>BOOK TITLES</small><b>{{ stats.titles }}</b></div></div>
+<div class="stat"><span class="stat-icon">▣</span><div><small>TOTAL COPIES</small><b>{{ stats.copies }}</b></div></div>
+<div class="stat"><span class="stat-icon">↗</span><div><small>COPIES ISSUED</small><b>{{ stats.issued }}</b></div></div>
+<div class="stat"><span class="stat-icon">✓</span><div><small>AVAILABLE</small><b>{{ stats.copies-stats.issued }}</b></div></div>
+</section>
+<section class="layout">
+<aside class="panel add-panel"><div class="panel-title"><div><span class="eyebrow">COLLECTION</span><h2>Add a book</h2></div><span class="plus">＋</span></div>
+<form method="post" action="{{url_for('add_book')}}">
+<label>Book title</label><input name="title" placeholder="e.g. The Great Gatsby" required>
+<label>Author</label><input name="author" placeholder="e.g. F. Scott Fitzgerald" required>
+<label>Total copies</label><input name="copies" type="number" min="1" value="1" required>
+<button class="primary" type="submit">＋ Add to library</button></form>
+<div class="hint">New books are added to your library inventory.</div></aside>
+<section class="panel inventory"><div class="panel-title"><div><span class="eyebrow">YOUR COLLECTION</span><h2>Book inventory</h2></div><span class="count">{{ books|length }} books</span></div>
+<form class="search" method="get"><span>⌕</span><input name="q" value="{{q}}" placeholder="Search by title or author..."><button>Search</button>{% if q %}<a href="{{url_for('index')}}">Clear</a>{% endif %}</form>
+<div class="table-wrap"><table><thead><tr><th>BOOK</th><th>AUTHOR</th><th>COPIES</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>
+{% for book in books %}<tr><td><b>{{book.title}}</b><small class="sub">ID #{{book.id}}</small></td><td>{{book.author}}</td><td>{{book.available_copies}} / {{book.total_copies}}<small class="sub">available</small></td><td>{% if book.available_copies %}<span class="badge available">Available</span>{% else %}<span class="badge out">Out of stock</span>{% endif %}</td><td class="actions">
+{% if book.available_copies %}<button class="link-btn" type="button" onclick="openIssue({{book.id}},{{book.available_copies}})">Issue</button>{% endif %}
+<form method="post" action="{{url_for('delete_book',book_id=book.id)}}" onsubmit="return confirm('Delete this book?')"><button class="link-btn danger" type="submit">Delete</button></form></td></tr>
+{% else %}<tr><td colspan="5" class="empty">No books found. Add a book or change your search.</td></tr>{% endfor %}
+</tbody></table></div></section></section>
+<section class="panel loans"><div class="panel-title"><div><span class="eyebrow">CIRCULATION</span><h2>Currently issued books</h2></div><span class="count">{{active|length}} active loans</span></div>
+<div class="table-wrap"><table><thead><tr><th>BOOK</th><th>BORROWER</th><th>QTY</th><th>ISSUED</th><th>DUE DATE</th><th>ACTION</th></tr></thead><tbody>
+{% for loan in active %}<tr><td><b>{{loan.title}}</b></td><td>{{loan.borrower}}</td><td>{{loan.quantity}}</td><td>{{loan.issue_date}}</td><td>{{loan.due_date}}{% if loan.due_date < today %}<small class="sub overdue">Overdue</small>{% endif %}</td><td><form method="post" action="{{url_for('return_book',loan_id=loan.id)}}"><button class="return-btn">Return book</button></form></td></tr>
+{% else %}<tr><td colspan="6" class="empty">There are no active book loans.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<footer>Library Management System <span>Frontend · Flask backend · SQLite database</span></footer>
+</main>
+<div class="modal" id="issueModal"><form class="modal-card" method="post" id="issueForm"><button type="button" class="close" onclick="closeIssue()">×</button><span class="eyebrow">BOOK CIRCULATION</span><h2>Issue book</h2><p>Enter borrower details to create a loan.</p><label>Borrower name</label><input name="borrower" required placeholder="Full name"><label>Quantity</label><input name="quantity" id="issueQty" type="number" min="1" value="1" required><div class="modal-actions"><button type="button" class="secondary" onclick="closeIssue()">Cancel</button><button class="primary">Confirm issue</button></div></form></div>
+<script src="{{url_for('static',filename='app.js')}}"></script></body></html>
