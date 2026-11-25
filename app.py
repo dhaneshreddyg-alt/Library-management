@@ -119,6 +119,9 @@ def api_books():
         rows=db.execute("SELECT * FROM books ORDER BY id DESC").fetchall()
     return {"books":[dict(r) for r in rows]}
 
+
+# Initialize database when the application starts
+init_db()
+
 if __name__ == "__main__":
-    init_db()
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
